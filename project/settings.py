@@ -11,16 +11,32 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
+import json
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+APPLICATION_DIR = Path(BASE_DIR).resolve(strict=True).parent
+
+with open(APPLICATION_DIR / 'secrets.json') as f:
+    secrets = json.loads(f.read())
+
+def get_secret(setting, secrets=secrets):
+    '''Get the secret variable or return explicit exception.
+    Thanks to twoscoopsofdjango'''
+    try:
+        return secrets[setting]
+    except KeyError:
+        error_msg = 'Set the {0} environment variable'.format(setting)
+        raise ImproperlyConfigured(error_msg)
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-47)==31e4^@c43s4-*2xjdgh0$kloq*26ruju4w*!@7y@vlrou'
+SECRET_KEY = get_secret('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -83,7 +99,7 @@ DATABASES = {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'microbuildings',
         'USER': 'postgres',
-        'PASSWORD': '09w5t43w',
+        'PASSWORD': get_secret('DEV_DB_PW'),
         'HOST': 'localhost',
         'PORT': '',
     }
