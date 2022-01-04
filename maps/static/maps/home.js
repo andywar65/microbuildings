@@ -3,10 +3,10 @@ let app = new Vue({
   el: '#vue-app',
   data : {
       map : Object,
-      buildLayerGroup : Object,
+      center : [ 41.8902, 12.4923 ],
+      zoom : 13,
       copy : '© <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
       url : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      activePlans : [],
       overlayMaps : {},
     },
   methods: {
@@ -21,60 +21,47 @@ let app = new Vue({
         "Base": base_map,
       }
 
+      const test_layer = L.layerGroup().addTo(this.map)
+
+      this.overlayMaps["Test layer"] = test_layer
+
       L.control.layers(baseMaps, this.overlayMaps).addTo(this.map)
 
     },
-    loadBuilding : async function () {
-      let response = await fetch(`/build-api/` + this.map_data.id )
+    loadBuilding : async function (cat_id) {
+      let response = await fetch(`/api/build-by-cat/` + cat_id)
       let geojson = await response.json()
       return geojson
     },
-    buildingPointToLayer : function (feature, latlng) {
-      return L.marker(latlng, {icon: this.buildMarker})
+    BuildingPointToLayer : function (feature, latlng) {
+      return L.marker(latlng, )
     },
     onEachBuildingFeature : function (feature, layer) {
-      let content = "<h5>" +
-        feature.properties.title +
-        "</h5><img src=\"" + feature.properties.image_path + "\"><br><small>" +
-        feature.properties.intro + "</small>"
-      layer.bindPopup(content, {minWidth: 300})
+      let content = "<h5>" + feature.properties.name + "</h5>"
+      layer.bindPopup(content, )
     },
-    renderBuilding : async function () {
-      this.buildLayerGroup.clearLayers()
-      let buildgeo = await this.loadBuilding()
+    renderBuilding : async function (cat_id, layergroup) {
+      let buildgeo = await this.loadBuilding(cat_id)
       markers = L.geoJSON(buildgeo,
-        { pointToLayer: this.buildingPointToLayer,
+        { pointToLayer: this.BuildingPointToLayer,
           onEachFeature: this.onEachBuildingFeature })
-      markers.addTo(this.buildLayerGroup)
-      try {
-        this.map.setView([buildgeo.geometry.coordinates[1],
-          buildgeo.geometry.coordinates[0]],
-          buildgeo.properties.zoom)
-      }
-      catch {
-        this.map.locate()
-          .on('locationfound', e => this.map.setView(e.latlng, 10))
-          .on('locationerror', () => this.setCityView())
-      }
+      markers.addTo(layergroup)
     },
-    setPlanCollection : function (plan) {
-      this.overlayMaps[plan.title] = L.layerGroup()
-      if (plan.visible) {
-        this.overlayMaps[plan.title].addTo(this.map)
+    setOverlayCollection : function (cat) {
+      this.overlayMaps[cat.name] = L.layerGroup()
+      if (cat.visible) {
+        this.overlayMaps[cat.name].addTo(this.map)
       }
-      this.activePlans.push(plan)
-      this.renderDxf(plan.id, this.overlayMaps[plan.title])
-      this.renderStation(plan.id, this.overlayMaps[plan.title])
+      this.renderBuilding(cat.id, this.overlayMaps[cat.name])
     },
     getCategories : async function () {
-      let jsonset = await fetch(`/api/categories/`)
-      let planset = await jsonset.json()
-      let plans = planset.plans
-      plans.forEach(this.setPlanCollection)
+      let jsoncat = await fetch(`/api/categories/`)
+      let categories = await jsoncat.json()
+      categories.forEach(this.setOverlayCollection)
     },
   },
   mounted() {
-    this.map = L.map('mapid')
+    this.map = L.map('mapid', {center: this.center, zoom : this.zoom})
     this.getCategories()
     this.setupLeafletMap()
   }
