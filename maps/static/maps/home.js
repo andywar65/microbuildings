@@ -1,3 +1,18 @@
+//export default {
+  //components: {
+    //'l-map': window.Vue2Leaflet.LMap,
+    //'l-tile-layer': window.Vue2Leaflet.LTileLayer,
+  //},
+//}
+
+Vue.component('l-map', window.Vue2Leaflet.LMap)
+
+Vue.component('l-control-layers', window.Vue2Leaflet.LControlLayers)
+
+Vue.component('l-tile-layer', window.Vue2Leaflet.LTileLayer)
+
+Vue.component('l-layer-group', window.Vue2Leaflet.LLayerGroup)
+
 let app = new Vue({
   delimiters: ["[[", "]]"],
   el: '#vue-app',
@@ -8,8 +23,13 @@ let app = new Vue({
       copy : '© <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
       url : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       overlayMaps : {},
+      name : "Layer",
+      categories : [],
     },
   methods: {
+    doSomethingOnReady : function () {
+        this.map = this.$refs.myMap.mapObject
+    },
     setupLeafletMap: function () {
 
       const base_map = L.tileLayer(this.url, {
@@ -40,7 +60,7 @@ let app = new Vue({
       let content = "<h5>" + feature.properties.name + "</h5>"
       layer.bindPopup(content, )
     },
-    renderBuilding : async function (cat_id, layergroup) {
+    renderBuilding : async function (cat_id) {
       let buildgeo = await this.loadBuilding(cat_id)
       markers = L.geoJSON(buildgeo,
         { pointToLayer: this.BuildingPointToLayer,
@@ -48,21 +68,17 @@ let app = new Vue({
       markers.addTo(layergroup)
     },
     setOverlayCollection : function (cat) {
-      this.overlayMaps[cat.name] = L.layerGroup()
-      if (cat.visible) {
-        this.overlayMaps[cat.name].addTo(this.map)
-      }
-      this.renderBuilding(cat.id, this.overlayMaps[cat.name])
+      this.renderBuilding(cat.id)
     },
     getCategories : async function () {
       let jsoncat = await fetch(`/api/categories/`)
-      let categories = await jsoncat.json()
-      categories.forEach(this.setOverlayCollection)
+      this.categories = await jsoncat.json()
+      this.categories.forEach(this.setOverlayCollection)
     },
   },
   mounted() {
-    this.map = L.map('mapid', {center: this.center, zoom : this.zoom})
+    //this.map = L.map('mapid', {center: this.center, zoom : this.zoom})
     this.getCategories()
-    this.setupLeafletMap()
+    //this.setupLeafletMap()
   }
 })

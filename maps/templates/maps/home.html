@@ -14,10 +14,16 @@
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
       integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
       crossorigin=""></script>
+    <script src="//unpkg.com/vue2-leaflet"></script>
   </head>
   <body>
     <div id="vue-app">
-      <div id="mapid" style="min-height: 800px; "></div>
+      <l-map style="height: 800px" :zoom="zoom" :center="center" ref="myMap" @ready="doSomethingOnReady()">
+        <l-control-layers position="topright"></l-control-layers>
+        <l-tile-layer :url="url" :attribution="copy" :name="name" layer-type="base"></l-tile-layer>
+        <l-layer-group v-for="category in categories" :ref="'layer-'+category.id" :name="category.name" :visible="category.visible" layer-type="overlay">
+        </l-layer-group>
+      </l-map>
     </div>
     <script src="{% static 'maps/home.js'%}"></script>
   </body>
