@@ -1,18 +1,10 @@
 from rest_framework import serializers
-from rest_framework_gis import serializers as gis_serializers
 
-from .models import Category, Building
-
-class BuildingSerializer(gis_serializers.GeoFeatureModelSerializer):
-    """Building GeoJSON serializer."""
-
-    class Meta:
-        fields = ("id", "name", "category",)
-        geo_field = "location"
-        model = Building
+from .models import Category
 
 class CategorySerializer(serializers.ModelSerializer):
+    builds = serializers.ReadOnlyField(source='get_buildings')
 
     class Meta:
         model = Category
-        fields = ("id", "name", "visible", )
+        fields = ("id", "name", "visible", "builds")

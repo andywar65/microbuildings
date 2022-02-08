@@ -21,7 +21,10 @@
       <l-map style="height: 800px" :zoom="zoom" :center="center" ref="myMap" @ready="doSomethingOnReady()">
         <l-control-layers position="topright"></l-control-layers>
         <l-tile-layer :url="url" :attribution="copy" :name="name" layer-type="base"></l-tile-layer>
-        <l-layer-group v-for="category in categories" :ref="'layer-'+category.id" :name="category.name" :visible="category.visible" layer-type="overlay">
+        <l-layer-group v-for="category in categories" :key="category.id" :name="category.name" :visible="category.visible" layer-type="overlay">
+          <l-marker v-for="build in category.builds" :key="build.id" :lat-lng="build.latLng">
+            <l-popup :content="build.name"></l-popup>
+          <l-marker>
         </l-layer-group>
       </l-map>
     </div>
